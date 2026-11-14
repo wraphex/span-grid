@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose draws everything; the activity theme only needs to match the mode, so the window
+         background is not a white flash behind a dark board. -->
+    <style name="Theme.SpanGridDemo" parent="android:Theme.Material.NoActionBar" />
+</resources>

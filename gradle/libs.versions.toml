@@ -1,0 +1,36 @@
+[versions]
+# Build
+agp = "9.5.1"
+kotlin = "2.4.21"
+
+# Compose — pinned instead of BOM-managed: a published POM has to carry real versions, and
+# publishing a platform dependency would force this BOM onto every consumer's resolution.
+compose = "1.10.0"
+material3 = "1.4.0"
+
+# AndroidX
+activityCompose = "1.13.0"
+
+# Test
+junit = "4.13.2"
+
+[libraries]
+# Compose
+compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
+compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics", version.ref = "compose" }
+compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
+compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
+
+# AndroidX
+activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+
+# Test
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

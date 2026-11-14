@@ -1,0 +1,6 @@
+jdk:
+  - openjdk21
+
+# Publish the two libraries only; :demo is a sample app and must not be built here.
+install:
+  - ./gradlew :span-grid-core:publishToMavenLocal :span-grid-compose:publishToMavenLocal
