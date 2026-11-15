@@ -9,7 +9,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import wraphex.spangrid.core.GridBoard
 import wraphex.spangrid.core.GridItem
 import wraphex.spangrid.core.GridSpan
@@ -210,9 +209,8 @@ class GridDragState(
                 // halfway between the two heights, which is where the eye expects it
                 val left = metrics.xOf(current.start.column).toFloat()
                 val top = metrics.yOf(current.start.row) + padPx
-                val columns = ((pointer.x - left + metrics.gapPx) / metrics.columnStep())
-                    .roundToInt()
-                val rows = ((pointer.y - top + metrics.gapPx) / metrics.rowStep()).roundToInt()
+                val columns = cellsForEdge(pointer.x - left, metrics.columnStep(), metrics.gapPx)
+                val rows = cellsForEdge(pointer.y - top, metrics.rowStep(), metrics.gapPx)
                 current.copy(
                     span = GridSpan(columns, rows).clampTo(
                         spec.boundsOf(current.id),
@@ -340,25 +338,21 @@ class GridDragState(
      * in [GridBoard.move] that is what makes a half-row drag a swap.
      */
     private fun dropColumnFor(free: Rect, span: GridSpan): Int =
-        (free.left / metrics.columnStep()).roundToInt()
-            .coerceIn(0, (metrics.columns - span.columns).coerceAtLeast(0))
+        dropIndex(free.left, metrics.columnStep(), maxIndex = metrics.columns - span.columns)
 
     private fun dropRowFor(free: Rect): Int =
-        ((free.top - padPx) / metrics.rowStep()).roundToInt().coerceAtLeast(0)
+        dropIndex(free.top, metrics.rowStep(), origin = padPx, maxIndex = Int.MAX_VALUE)
 
     private fun autoScroll(preview: DragPreview, scrollOffset: Int, scrollBy: (Float) -> Unit) {
-        if (viewportHeightPx == 0) return
         val target = targetOf(preview)
-        val top = metrics.yOf(target.row) + padPx
-        val bottom = metrics.yOf(target.row) + metrics.heightOf(target.span) + padPx
-        val viewBottom = scrollOffset + viewportHeightPx
-        val delta = when {
-            bottom > viewBottom - edgeScrollPx ->
-                minOf(bottom - (viewBottom - edgeScrollPx), scrollStepPx)
-            top < scrollOffset + edgeScrollPx ->
-                maxOf(top - (scrollOffset + edgeScrollPx), -scrollStepPx)
-            else -> 0f
-        }
+        val delta = autoScrollDelta(
+            targetTop = metrics.yOf(target.row) + padPx,
+            targetBottom = metrics.yOf(target.row) + metrics.heightOf(target.span) + padPx,
+            scrollOffset = scrollOffset,
+            viewportHeight = viewportHeightPx,
+            edge = edgeScrollPx,
+            step = scrollStepPx
+        )
         if (delta != 0f) scrollBy(delta)
     }
 }
