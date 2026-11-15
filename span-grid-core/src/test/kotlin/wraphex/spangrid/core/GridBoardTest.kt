@@ -37,11 +37,23 @@ class GridBoardTest {
     }
 
     @Test
-    fun `an out of bounds width is clamped to the nearest allowed span`() {
-        val items = GridBoard.pack(listOf(item("light.a", 0, 0, GridSpan(3, 2))), spec)
+    fun `a span inside the bounds is kept, even when the handle would not offer it`() {
+        // 3 columns is off the rhythm rule, i.e. un-resizable, but it is in bounds: a host declared
+        // it, so nothing on the board may quietly turn it into a 4-wide tile
+        val stored = item("light.a", 0, 0, GridSpan(3, 2))
+        assertEquals(GridSpan(3, 2), GridBoard.pack(listOf(stored), spec).single().span)
+        assertEquals(GridSpan(3, 2), GridBoard.tidy(listOf(stored), spec).single().span)
+        assertEquals(
+            GridSpan(3, 2),
+            GridBoard.move(listOf(stored), "light.a", column = 1, row = 0, spec).single().span
+        )
+    }
 
-        // 3 columns is off by the rhythm rule; (2,2) and (4,2) tie on distance, the bigger wins
-        assertEquals(GridSpan(4, 2), items.single().span)
+    @Test
+    fun `a span outside the bounds is pulled back axis by axis`() {
+        // 6 columns and 5 rows do not fit the grid, let alone this switch
+        val items = GridBoard.pack(listOf(item("switch.a", 0, 0, GridSpan(6, 5))), spec)
+        assertEquals(GridSpan(4, 1), items.single().span)
     }
 
     @Test

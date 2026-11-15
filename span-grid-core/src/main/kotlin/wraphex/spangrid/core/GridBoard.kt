@@ -5,8 +5,8 @@ package wraphex.spangrid.core
  *
  * The rhythm rule is the only global policy: a tile is 1 column, 2 columns or full width.
  * 3 columns leaves a 1-cell hole and a narrow text column, and 1×2 is a narrow, tall box with
- * nothing to show — so neither is offered. An item that really wants one is expected to widen its
- * [SpanBounds] (and then its own layout), not to ask for a table here.
+ * nothing to show — so neither is offered. A host that really wants one declares it in the stored
+ * table: the board keeps any span inside its [SpanBounds], the handle just never offers it.
  */
 fun allowedSpans(
     bounds: SpanBounds,
@@ -24,8 +24,8 @@ fun allowedSpans(
 /**
  * The allowed span closest to this one (sum of axis distances, larger area wins a tie).
  *
- * Called on load and on every drag frame, so a stored or dragged span can never be out of bounds:
- * the result is always a member of [allowedSpans].
+ * What the handle lands on while resizing, so the result is always a member of [allowedSpans]. A
+ * stored table is *not* repaired with this: see [coerceToBounds].
  */
 fun GridSpan.clampTo(
     bounds: SpanBounds,
@@ -39,6 +39,18 @@ fun GridSpan.clampTo(
             .thenByDescending { it.columns * it.rows }
     )
 }
+
+/**
+ * The same span pulled inside [bounds] and the grid's limits, axis by axis — what the board applies
+ * to a span a host declares.
+ *
+ * Deliberately not [clampTo]: the rhythm rule is a policy for what the *handle* offers, not for what
+ * a table may contain, so a host-declared 3-wide tile survives a drag unchanged.
+ */
+fun GridSpan.coerceToBounds(bounds: SpanBounds, gridColumns: Int, maxRows: Int): GridSpan = GridSpan(
+    columns = columns.coerceIn(bounds.min.columns, maxOf(bounds.min.columns, minOf(bounds.max.columns, gridColumns))),
+    rows = rows.coerceIn(bounds.min.rows, maxOf(bounds.min.rows, minOf(bounds.max.rows, maxRows)))
+)
 
 /**
  * Placement rules for a board of fixed-column, variable-height items.
@@ -70,7 +82,7 @@ object GridBoard {
         val occupied = ArrayList<CellRect>(items.size)
         val placed = ArrayList<GridItem>(items.size)
         for (item in items.sortedWith(ReadingOrder)) {
-            val span = item.span.clampTo(spec.boundsOf(item.id), spec.columns, spec.maxRows)
+            val span = item.span.coerceToBounds(spec.boundsOf(item.id), spec.columns, spec.maxRows)
             val (column, row) = firstFree(occupied, span, spec.columns)
             occupied += CellRect(column, row, span)
             placed += item.copy(
@@ -97,7 +109,7 @@ object GridBoard {
      */
     fun move(items: List<GridItem>, id: String, column: Int, row: Int, spec: GridSpec): List<GridItem> {
         val target = items.firstOrNull { it.id == id } ?: return items
-        val span = target.span.clampTo(spec.boundsOf(id), spec.columns, spec.maxRows)
+        val span = target.span.coerceToBounds(spec.boundsOf(id), spec.columns, spec.maxRows)
         val moved = target.copy(
             column = column.coerceIn(0, (spec.columns - span.columns).coerceAtLeast(0)),
             row = row.coerceAtLeast(0),
@@ -153,7 +165,7 @@ object GridBoard {
      */
     fun resize(items: List<GridItem>, id: String, span: GridSpan, spec: GridSpec): List<GridItem> {
         val target = items.firstOrNull { it.id == id } ?: return items
-        val clamped = span.clampTo(spec.boundsOf(id), spec.columns, spec.maxRows)
+        val clamped = span.coerceToBounds(spec.boundsOf(id), spec.columns, spec.maxRows)
         val resized = target.copy(
             column = target.column.coerceIn(0, (spec.columns - clamped.columns).coerceAtLeast(0)),
             columns = clamped.columns,
@@ -194,7 +206,7 @@ object GridBoard {
         defaultSpan: GridSpan,
         spec: GridSpec
     ): List<GridItem> {
-        val span = defaultSpan.clampTo(spec.boundsOf(id), spec.columns, spec.maxRows)
+        val span = defaultSpan.coerceToBounds(spec.boundsOf(id), spec.columns, spec.maxRows)
         val added = GridItem.at(id, column = 0, row = 0, span = span)
         return keepPlaced(items + added, spec)
     }
@@ -207,7 +219,7 @@ object GridBoard {
      * free row to drop into on a packed board, so searching for one sends it to the very end.
      */
     fun insert(items: List<GridItem>, item: GridItem, spec: GridSpec): List<GridItem> {
-        val span = item.span.clampTo(spec.boundsOf(item.id), spec.columns, spec.maxRows)
+        val span = item.span.coerceToBounds(spec.boundsOf(item.id), spec.columns, spec.maxRows)
         val added = item.copy(
             column = item.column.coerceIn(0, (spec.columns - span.columns).coerceAtLeast(0)),
             row = item.row.coerceAtLeast(0),
@@ -235,7 +247,7 @@ object GridBoard {
         val placed = ArrayList<GridItem>(items.size)
         val occupied = ArrayList<CellRect>(items.size)
         for (item in items) {
-            val span = item.span.clampTo(spec.boundsOf(item.id), spec.columns, spec.maxRows)
+            val span = item.span.coerceToBounds(spec.boundsOf(item.id), spec.columns, spec.maxRows)
             val stored = CellRect(item.column, item.row, span)
             val keep = stored.column >= 0 &&
                 stored.column + span.columns <= spec.columns &&

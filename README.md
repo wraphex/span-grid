@@ -67,8 +67,10 @@ items = GridBoard.tidy(items, spec)
 ## The span rhythm
 
 `allowedSpans` only offers spans that tile without leaving a one-cell hole: 1 column × 1 row,
-2 columns at any height, or full width. A host that genuinely wants a 1×2 box widens its own
-`SpanBounds` — the rule is derived from bounds, never hand-listed.
+2 columns at any height, or full width. That is the *handle's* menu, not a validity rule: what a
+table may contain is `SpanBounds` alone, and `pack` / `tidy` / `move` never reshape a span that fits
+its bounds. A host that genuinely wants a 3-wide tile declares it and keeps it — it just cannot
+drag-resize back to that shape.
 
 ## Development
 
