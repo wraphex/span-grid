@@ -7,13 +7,15 @@ android {
     namespace = "wraphex.spangrid.demo"
 
     compileSdk {
-        version = release(36)
+        version = release(37) {
+            minorApiLevel = 1
+        }
     }
 
     defaultConfig {
         applicationId = "wraphex.spangrid.demo"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
     }

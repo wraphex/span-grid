@@ -5,8 +5,10 @@ kotlin = "2.4.21"
 
 # Compose — pinned instead of BOM-managed: a published POM has to carry real versions, and
 # publishing a platform dependency would force this BOM onto every consumer's resolution.
-compose = "1.10.0"
-material3 = "1.4.0"
+# compose is kept in lockstep with material3: 1.5.0 declares foundation 1.12.0, so pinning an
+# older ui/foundation here would let Gradle mix 1.12 foundation with a 1.10 ui.
+compose = "1.13.0"
+material3 = "1.5.0"
 
 # AndroidX
 activityCompose = "1.13.0"
