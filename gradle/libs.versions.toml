@@ -1,6 +1,6 @@
 [versions]
 # Build
-agp = "9.5.2"
+agp = "9.5.3"
 kotlin = "2.4.21"
 
 # Compose — pinned instead of BOM-managed: a published POM has to carry real versions, and
